@@ -7,10 +7,10 @@ use cw2::set_contract_version;
 
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
-use crate::state::{Job, Metadata, JOBS, LAST_JOB_ID, METADATA};
+use crate::state::{Job, JOBS, LAST_JOB_ID};
 
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:home-lib";
+const CONTRACT_NAME: &str = "HomeLib";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -18,23 +18,15 @@ pub fn instantiate(
     deps: DepsMut,
     _env: Env,
     _info: MessageInfo,
-    msg: InstantiateMsg,
+    _msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-
-    let metadata = Metadata {
-        author: msg.author,
-        description: msg.description,
-        copyright: msg.copyright,
-    };
-    METADATA.save(deps.storage, &metadata)?;
 
     LAST_JOB_ID.save(deps.storage, &0)?;
 
     let event = Event::new("Instantiated")
-        .add_attribute("author", metadata.author)
-        .add_attribute("description", metadata.description)
-        .add_attribute("copyright", metadata.copyright);
+        .add_attribute("contract_name", CONTRACT_NAME.to_owned())
+        .add_attribute("contract_version", CONTRACT_VERSION.to_owned());
 
     Ok(Response::default().add_event(event))
 }
@@ -165,11 +157,7 @@ mod tests {
         let creator_info = mock_info("creator", &coins(1000, "token"));
 
         // Check response of initialization
-        let msg = InstantiateMsg {
-            author: "PassgenixTeam".to_owned(),
-            description: "HomeLiv is a smart contract for create job.".to_owned(),
-            copyright: "2023".to_owned(),
-        };
+        let msg = InstantiateMsg {};
         let res = instantiate(deps.as_mut(), mock_env(), creator_info, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
@@ -186,11 +174,7 @@ mod tests {
         let sender1_info = mock_info("sender1", &coins(1000, "token"));
         let sender2_info = mock_info("sender2", &coins(1000, "token"));
 
-        let instantiate_msg = InstantiateMsg {
-            author: "PassgenixTeam".to_owned(),
-            description: "HomeLiv is a smart contract for create job.".to_owned(),
-            copyright: "2023".to_owned(),
-        };
+        let instantiate_msg = InstantiateMsg {};
         instantiate(deps.as_mut(), mock_env(), creator_info, instantiate_msg).unwrap();
 
         // Create new job
@@ -237,11 +221,7 @@ mod tests {
         let sender1_info = mock_info("sender1", &coins(1000, "token"));
         let sender2_info = mock_info("sender2", &coins(1000, "token"));
 
-        let instantiate_msg = InstantiateMsg {
-            author: "PassgenixTeam".to_owned(),
-            description: "HomeLiv is a smart contract for create job.".to_owned(),
-            copyright: "2023".to_owned(),
-        };
+        let instantiate_msg = InstantiateMsg {};
         instantiate(deps.as_mut(), mock_env(), creator_info, instantiate_msg).unwrap();
 
         // Create new job

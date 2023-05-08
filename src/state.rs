@@ -3,14 +3,6 @@ use cosmwasm_std::Addr;
 use cw_storage_plus::{Item, Map};
 
 #[cw_serde]
-pub struct Metadata {
-    pub author: String,
-    pub description: String,
-    pub copyright: String,
-}
-pub const METADATA: Item<Metadata> = Item::new("metadata");
-
-#[cw_serde]
 pub struct Job {
     pub owner: Addr,
     pub worker: Addr,

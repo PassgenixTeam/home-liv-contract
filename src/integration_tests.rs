@@ -67,11 +67,7 @@ mod tests {
         let mut app = mock_app();
         let cw_template_id = app.store_code(contract_template());
 
-        let msg = InstantiateMsg {
-            author: "PassgenixTeam".to_owned(),
-            description: "HomeLiv is a smart contract for create job.".to_owned(),
-            copyright: "2023".to_owned(),
-        };
+        let msg = InstantiateMsg {};
         let cw_template_contract_addr = app
             .instantiate_contract(
                 cw_template_id,

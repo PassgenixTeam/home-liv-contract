@@ -4,11 +4,7 @@ use cosmwasm_std::Addr;
 use crate::state::Job;
 
 #[cw_serde]
-pub struct InstantiateMsg {
-    pub author: String,
-    pub description: String,
-    pub copyright: String,
-}
+pub struct InstantiateMsg {}
 
 #[cw_serde]
 pub enum ExecuteMsg {
