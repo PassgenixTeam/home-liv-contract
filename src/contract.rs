@@ -29,12 +29,14 @@ pub fn instantiate(
     };
     METADATA.save(deps.storage, &metadata)?;
 
+    LAST_JOB_ID.save(deps.storage, &0)?;
+
     let event = Event::new("Instantiated")
         .add_attribute("author", metadata.author)
         .add_attribute("description", metadata.description)
         .add_attribute("copyright", metadata.copyright);
 
-    Ok(Response::new().add_event(event))
+    Ok(Response::default().add_event(event))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -206,15 +208,15 @@ mod tests {
 
         // Check new job_id
         let res = query(deps.as_ref(), mock_env(), QueryMsg::GetLastJobId {}).unwrap();
-        let last_job_id: u128 = from_binary(&res).unwrap();
-        assert_eq!(1, last_job_id);
+        let value: GetLastJobIdResponse = from_binary(&res).unwrap();
+        assert_eq!(1, value.last_job_id);
 
         // Check new job
         let res = query(
             deps.as_ref(),
             mock_env(),
             QueryMsg::GetJob {
-                job_id: last_job_id,
+                job_id: value.last_job_id,
             },
         )
         .unwrap();
