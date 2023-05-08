@@ -196,7 +196,7 @@ mod tests {
         // Create new job
         let commitment: String = "<EUENO link to commitment>".to_owned();
         let description: String = "<EUENO link to description>".to_owned();
-        let owner_signature: String = "Sender 1 signature".to_owned();
+        let owner_signature: String = "Sender1 signature".to_owned();
 
         let msg = ExecuteMsg::CreateNewJob {
             worker: sender2_info.sender.to_owned(),
@@ -222,11 +222,11 @@ mod tests {
         .unwrap();
         let value: GetJobResponse = from_binary(&res).unwrap();
         let job = value.job;
-        assert_eq!(job.commitment, commitment);
-        assert_eq!(job.description, description);
-        assert_eq!(job.owner_signature, owner_signature);
-        assert_eq!(job.owner, sender1_info.sender);
-        assert_eq!(job.worker, sender2_info.sender);
+        assert_eq!(job.commitment, commitment.to_owned());
+        assert_eq!(job.description, description.to_owned());
+        assert_eq!(job.owner_signature, owner_signature.to_owned());
+        assert_eq!(job.owner, sender1_info.sender.to_owned());
+        assert_eq!(job.worker, sender2_info.sender.to_owned());
         assert_eq!(job.worker_signature, "".to_owned());
     }
 
@@ -244,18 +244,42 @@ mod tests {
         };
         instantiate(deps.as_mut(), mock_env(), creator_info, instantiate_msg).unwrap();
 
-        // beneficiary can release it
+        // Create new job
+        let commitment: String = "<EUENO link to commitment>".to_owned();
+        let description: String = "<EUENO link to description>".to_owned();
+        let owner_signature: String = "Sender1 signature".to_owned();
+
         let msg = ExecuteMsg::CreateNewJob {
-            worker: sender2_info.sender,
-            commitment: "<EUENO link to commitment>".to_owned(),
-            description: "<EUENO link to description>".to_owned(),
-            owner_signature: "Sender 1 signature".to_owned(),
+            worker: sender2_info.sender.to_owned(),
+            commitment: commitment.to_owned(),
+            description: description.to_owned(),
+            owner_signature: owner_signature.to_owned(),
         };
         execute(deps.as_mut(), mock_env(), sender1_info.to_owned(), msg).unwrap();
 
-        // should increase counter by 1
+        // Get job_id
         let res = query(deps.as_ref(), mock_env(), QueryMsg::GetLastJobId {}).unwrap();
         let value: GetLastJobIdResponse = from_binary(&res).unwrap();
-        assert_eq!(1, value.last_job_id);
+        let job_id = value.last_job_id;
+
+        // Accept job
+        let worker_signature: String = "Sender2 signature".to_owned();
+
+        let msg = ExecuteMsg::AcceptJob {
+            job_id,
+            worker_signature: worker_signature.to_owned(),
+        };
+        execute(deps.as_mut(), mock_env(), sender2_info.to_owned(), msg).unwrap();
+
+        // Check new job
+        let res = query(deps.as_ref(), mock_env(), QueryMsg::GetJob { job_id }).unwrap();
+        let value: GetJobResponse = from_binary(&res).unwrap();
+        let job = value.job;
+        assert_eq!(job.commitment, commitment.to_owned());
+        assert_eq!(job.description, description.to_owned());
+        assert_eq!(job.owner_signature, owner_signature.to_owned());
+        assert_eq!(job.owner, sender1_info.sender.to_owned());
+        assert_eq!(job.worker, sender2_info.sender.to_owned());
+        assert_eq!(job.worker_signature, worker_signature.to_owned());
     }
 }

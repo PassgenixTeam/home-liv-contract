@@ -29,7 +29,31 @@ mod tests {
                 .bank
                 .init_balance(
                     storage,
+                    &Addr::unchecked(ADMIN),
+                    vec![Coin {
+                        denom: NATIVE_DENOM.to_string(),
+                        amount: Uint128::new(1000),
+                    }],
+                )
+                .unwrap();
+
+            router
+                .bank
+                .init_balance(
+                    storage,
                     &Addr::unchecked(USER1),
+                    vec![Coin {
+                        denom: NATIVE_DENOM.to_string(),
+                        amount: Uint128::new(1000),
+                    }],
+                )
+                .unwrap();
+
+            router
+                .bank
+                .init_balance(
+                    storage,
+                    &Addr::unchecked(USER2),
                     vec![Coin {
                         denom: NATIVE_DENOM.to_string(),
                         amount: Uint128::new(1000),
@@ -64,28 +88,60 @@ mod tests {
         (app, cw_template_contract)
     }
 
-    mod count {
+    mod flow_tests {
         use super::*;
-        use crate::msg::ExecuteMsg;
+        use crate::msg::{ExecuteMsg, GetJobResponse, GetLastJobIdResponse, QueryMsg};
 
         #[test]
         fn flow1() {
             let (mut app, cw_template_contract) = proper_instantiate();
 
             // Create new job
+            let commitment: String = "<EUENO link to commitment>".to_owned();
+            let description: String = "<EUENO link to description>".to_owned();
+            let owner_signature: String = "Sender1 signature".to_owned();
+
             let msg = ExecuteMsg::CreateNewJob {
                 worker: Addr::unchecked(USER2),
-                commitment: "<EUENO link to commitment>".to_owned(),
-                description: "<EUENO link to description>".to_owned(),
-                owner_signature: "Sender 1 signature".to_owned(),
+                commitment: commitment.to_owned(),
+                description: description.to_owned(),
+                owner_signature: owner_signature.to_owned(),
             };
             let cosmos_msg = cw_template_contract.call(msg).unwrap();
             app.execute(Addr::unchecked(USER1), cosmos_msg).unwrap();
+            let resp: GetLastJobIdResponse = app
+                .wrap()
+                .query_wasm_smart(cw_template_contract.addr(), &QueryMsg::GetLastJobId {})
+                .unwrap();
+            let last_job_id = resp.last_job_id;
 
             // Accept job
-            // let msg = ExecuteMsg::AcceptJob { job_id: , worker_signature: () }
-            // let cosmos_msg = cw_template_contract.call(msg).unwrap();
-            // app.execute(Addr::unchecked(USER1), cosmos_msg).unwrap();
+            let worker_signature: String = "Sender2 signature".to_owned();
+
+            let msg = ExecuteMsg::AcceptJob {
+                job_id: last_job_id,
+                worker_signature: worker_signature.to_owned(),
+            };
+            let cosmos_msg = cw_template_contract.call(msg).unwrap();
+            app.execute(Addr::unchecked(USER2), cosmos_msg).unwrap();
+
+            // Check job
+            let resp: GetJobResponse = app
+                .wrap()
+                .query_wasm_smart(
+                    cw_template_contract.addr(),
+                    &QueryMsg::GetJob {
+                        job_id: last_job_id,
+                    },
+                )
+                .unwrap();
+            let job = resp.job;
+            assert_eq!(job.commitment, commitment.to_owned());
+            assert_eq!(job.description, description.to_owned());
+            assert_eq!(job.owner_signature, owner_signature.to_owned());
+            assert_eq!(job.owner, Addr::unchecked(USER1));
+            assert_eq!(job.worker, Addr::unchecked(USER2));
+            assert_eq!(job.worker_signature, worker_signature.to_owned());
         }
     }
 }
