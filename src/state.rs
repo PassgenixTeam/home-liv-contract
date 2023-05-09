@@ -10,6 +10,10 @@ pub struct Job {
     pub commitment: String,
     pub owner_signature: String,
     pub worker_signature: String,
+    pub total_price: u128,
 }
 pub const LAST_JOB_ID: Item<u128> = Item::new("last_job_id");
+
 pub const JOBS: Map<u128, Job> = Map::new("job");
+
+pub const DEPOSIT_FEE_PERCENT: Item<u128> = Item::new("deposit_fee_percent");

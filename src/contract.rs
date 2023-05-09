@@ -7,7 +7,7 @@ use cw2::set_contract_version;
 
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
-use crate::state::{Job, JOBS, LAST_JOB_ID};
+use crate::state::{Job, DEPOSIT_FEE_PERCENT, JOBS, LAST_JOB_ID};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "HomeLib";
@@ -23,6 +23,8 @@ pub fn instantiate(
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     LAST_JOB_ID.save(deps.storage, &0)?;
+
+    DEPOSIT_FEE_PERCENT.save(deps.storage, &1)?;
 
     let event = Event::new("Instantiated")
         .add_attribute("contract_name", CONTRACT_NAME.to_owned())
@@ -44,7 +46,16 @@ pub fn execute(
             commitment,
             description,
             owner_signature,
-        } => execute::create_new_job(deps, info, worker, commitment, description, owner_signature),
+            total_price,
+        } => execute::create_new_job(
+            deps,
+            info,
+            worker,
+            commitment,
+            description,
+            owner_signature,
+            total_price,
+        ),
 
         ExecuteMsg::AcceptJob {
             job_id,
@@ -63,6 +74,7 @@ pub mod execute {
         commitment: String,
         description: String,
         owner_signature: String,
+        total_price: u128,
     ) -> Result<Response, ContractError> {
         // TODO: Validate signature
 
@@ -73,6 +85,7 @@ pub mod execute {
             commitment,
             owner_signature,
             worker_signature: "".to_owned(),
+            total_price,
         };
 
         let last_job_id =
@@ -121,23 +134,31 @@ pub mod execute {
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
+        QueryMsg::GetDepositFeePercent {} => to_binary(&query::get_deposit_fee_percent(deps)?),
+
         QueryMsg::GetLastJobId {} => to_binary(&query::last_job_id(deps)?),
 
-        QueryMsg::GetJob { job_id } => to_binary(&query::get_job(deps, job_id)?),
+        QueryMsg::GetJob { job_id } => to_binary(&query::job(deps, job_id)?),
     }
 }
 
 pub mod query {
-    use crate::msg::{GetJobResponse, GetLastJobIdResponse};
-
     use super::*;
+    use crate::msg::{GetDepositFeePercentResponse, GetJobResponse, GetLastJobIdResponse};
+
+    pub fn get_deposit_fee_percent(deps: Deps) -> StdResult<GetDepositFeePercentResponse> {
+        let deposit_fee_percent = DEPOSIT_FEE_PERCENT.load(deps.storage)?;
+        Ok(GetDepositFeePercentResponse {
+            deposit_fee_percent,
+        })
+    }
 
     pub fn last_job_id(deps: Deps) -> StdResult<GetLastJobIdResponse> {
         let last_job_id = LAST_JOB_ID.load(deps.storage)?;
         Ok(GetLastJobIdResponse { last_job_id })
     }
 
-    pub fn get_job(deps: Deps, job_id: u128) -> StdResult<GetJobResponse> {
+    pub fn job(deps: Deps, job_id: u128) -> StdResult<GetJobResponse> {
         let job = JOBS.load(deps.storage, job_id)?;
         Ok(GetJobResponse { job })
     }
@@ -181,12 +202,14 @@ mod tests {
         let commitment: String = "<EUENO link to commitment>".to_owned();
         let description: String = "<EUENO link to description>".to_owned();
         let owner_signature: String = "Sender1 signature".to_owned();
+        let total_price: u128 = 1000;
 
         let msg = ExecuteMsg::CreateNewJob {
             worker: sender2_info.sender.to_owned(),
             commitment: commitment.to_owned(),
             description: description.to_owned(),
             owner_signature: owner_signature.to_owned(),
+            total_price,
         };
         execute(deps.as_mut(), mock_env(), sender1_info.to_owned(), msg).unwrap();
 
@@ -228,12 +251,14 @@ mod tests {
         let commitment: String = "<EUENO link to commitment>".to_owned();
         let description: String = "<EUENO link to description>".to_owned();
         let owner_signature: String = "Sender1 signature".to_owned();
+        let total_price: u128 = 1000;
 
         let msg = ExecuteMsg::CreateNewJob {
             worker: sender2_info.sender.to_owned(),
             commitment: commitment.to_owned(),
             description: description.to_owned(),
             owner_signature: owner_signature.to_owned(),
+            total_price,
         };
         execute(deps.as_mut(), mock_env(), sender1_info.to_owned(), msg).unwrap();
 

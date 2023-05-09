@@ -96,12 +96,14 @@ mod tests {
             let commitment: String = "<EUENO link to commitment>".to_owned();
             let description: String = "<EUENO link to description>".to_owned();
             let owner_signature: String = "Sender1 signature".to_owned();
+            let total_price: u128 = 1000;
 
             let msg = ExecuteMsg::CreateNewJob {
                 worker: Addr::unchecked(USER2),
                 commitment: commitment.to_owned(),
                 description: description.to_owned(),
                 owner_signature: owner_signature.to_owned(),
+                total_price,
             };
             let cosmos_msg = cw_template_contract.call(msg).unwrap();
             app.execute(Addr::unchecked(USER1), cosmos_msg).unwrap();

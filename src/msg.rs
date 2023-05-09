@@ -13,6 +13,7 @@ pub enum ExecuteMsg {
         commitment: String,
         description: String,
         owner_signature: String,
+        total_price: u128,
     },
 
     AcceptJob {
@@ -24,6 +25,10 @@ pub enum ExecuteMsg {
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
+    // Get deposit fee percent
+    #[returns(GetDepositFeePercentResponse)]
+    GetDepositFeePercent {},
+
     // Get last job_id
     #[returns(GetLastJobIdResponse)]
     GetLastJobId {},
@@ -31,6 +36,11 @@ pub enum QueryMsg {
     // Query job by job_id
     #[returns(GetJobResponse)]
     GetJob { job_id: u128 },
+}
+
+#[cw_serde]
+pub struct GetDepositFeePercentResponse {
+    pub deposit_fee_percent: u128,
 }
 
 #[cw_serde]
