@@ -19,10 +19,6 @@ mod tests {
     const USER2: &str = "USER2";
     const NATIVE_DENOM: &str = "denom";
 
-    // const DEFAULT_COMMITMENT: &str = "<EUENO link to commitment>";
-    // const DEFAULT_DESCRIPTION: &str = "<EUENO link to description>";
-    // const DEFAULT_OWNER_SIGNATURE: &str = "Sender 1 signature";
-
     fn mock_app() -> App {
         AppBuilder::new().build(|router, _, storage| {
             router
@@ -95,14 +91,12 @@ mod tests {
             // Create new job
             let commitment: String = "<EUENO link to commitment>".to_owned();
             let description: String = "<EUENO link to description>".to_owned();
-            let owner_signature: String = "Sender1 signature".to_owned();
             let total_price: u128 = 1000;
 
             let msg = ExecuteMsg::CreateNewJob {
                 worker: Addr::unchecked(USER2),
                 commitment: commitment.to_owned(),
                 description: description.to_owned(),
-                owner_signature: owner_signature.to_owned(),
                 total_price,
             };
             let cosmos_msg = cw_template_contract.call(msg).unwrap();
@@ -114,11 +108,9 @@ mod tests {
             let last_job_id = resp.last_job_id;
 
             // Accept job
-            let worker_signature: String = "Sender2 signature".to_owned();
 
             let msg = ExecuteMsg::AcceptJob {
                 job_id: last_job_id,
-                worker_signature: worker_signature.to_owned(),
             };
             let cosmos_msg = cw_template_contract.call(msg).unwrap();
             app.execute(Addr::unchecked(USER2), cosmos_msg).unwrap();
@@ -136,10 +128,8 @@ mod tests {
             let job = resp.job;
             assert_eq!(job.commitment, commitment.to_owned());
             assert_eq!(job.description, description.to_owned());
-            assert_eq!(job.owner_signature, owner_signature.to_owned());
             assert_eq!(job.owner, Addr::unchecked(USER1));
             assert_eq!(job.worker, Addr::unchecked(USER2));
-            assert_eq!(job.worker_signature, worker_signature.to_owned());
         }
     }
 }

@@ -8,8 +8,6 @@ pub struct Job {
     pub worker: Addr,
     pub description: String,
     pub commitment: String,
-    pub owner_signature: String,
-    pub worker_signature: String,
     pub total_price: u128,
 }
 pub const LAST_JOB_ID: Item<u128> = Item::new("last_job_id");

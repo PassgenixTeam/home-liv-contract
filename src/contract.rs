@@ -45,22 +45,10 @@ pub fn execute(
             worker,
             commitment,
             description,
-            owner_signature,
             total_price,
-        } => execute::create_new_job(
-            deps,
-            info,
-            worker,
-            commitment,
-            description,
-            owner_signature,
-            total_price,
-        ),
+        } => execute::create_new_job(deps, info, worker, commitment, description, total_price),
 
-        ExecuteMsg::AcceptJob {
-            job_id,
-            worker_signature,
-        } => execute::accept_job(deps, info, job_id, worker_signature),
+        ExecuteMsg::AcceptJob { job_id } => execute::accept_job(deps, info, job_id),
     }
 }
 
@@ -73,7 +61,6 @@ pub mod execute {
         worker: Addr,
         commitment: String,
         description: String,
-        owner_signature: String,
         total_price: u128,
     ) -> Result<Response, ContractError> {
         // TODO: Validate signature
@@ -83,8 +70,6 @@ pub mod execute {
             worker,
             description,
             commitment,
-            owner_signature,
-            worker_signature: "".to_owned(),
             total_price,
         };
 
@@ -106,7 +91,6 @@ pub mod execute {
         deps: DepsMut,
         info: MessageInfo,
         job_id: u128,
-        worker_signature: String,
     ) -> Result<Response, ContractError> {
         // TODO: validate job_id
         let _last_job_id = LAST_JOB_ID.load(deps.storage)?;
@@ -116,7 +100,6 @@ pub mod execute {
             job_id,
             |mut _job| -> Result<_, ContractError> {
                 let mut job = _job.unwrap();
-                job.worker_signature = worker_signature.to_owned();
                 job.worker = info.sender.to_owned();
                 Ok(job)
             },
@@ -124,8 +107,7 @@ pub mod execute {
 
         let event = Event::new("AcceptedJob")
             .add_attribute("job_id", job_id.to_string())
-            .add_attribute("worker", info.sender.to_string())
-            .add_attribute("worker_signature", worker_signature);
+            .add_attribute("worker", info.sender.to_string());
 
         Ok(Response::new().add_event(event))
     }
@@ -201,14 +183,12 @@ mod tests {
         // Create new job
         let commitment: String = "<EUENO link to commitment>".to_owned();
         let description: String = "<EUENO link to description>".to_owned();
-        let owner_signature: String = "Sender1 signature".to_owned();
         let total_price: u128 = 1000;
 
         let msg = ExecuteMsg::CreateNewJob {
             worker: sender2_info.sender.to_owned(),
             commitment: commitment.to_owned(),
             description: description.to_owned(),
-            owner_signature: owner_signature.to_owned(),
             total_price,
         };
         execute(deps.as_mut(), mock_env(), sender1_info.to_owned(), msg).unwrap();
@@ -231,10 +211,8 @@ mod tests {
         let job = value.job;
         assert_eq!(job.commitment, commitment.to_owned());
         assert_eq!(job.description, description.to_owned());
-        assert_eq!(job.owner_signature, owner_signature.to_owned());
         assert_eq!(job.owner, sender1_info.sender.to_owned());
         assert_eq!(job.worker, sender2_info.sender.to_owned());
-        assert_eq!(job.worker_signature, "".to_owned());
     }
 
     #[test]
@@ -250,14 +228,12 @@ mod tests {
         // Create new job
         let commitment: String = "<EUENO link to commitment>".to_owned();
         let description: String = "<EUENO link to description>".to_owned();
-        let owner_signature: String = "Sender1 signature".to_owned();
         let total_price: u128 = 1000;
 
         let msg = ExecuteMsg::CreateNewJob {
             worker: sender2_info.sender.to_owned(),
             commitment: commitment.to_owned(),
             description: description.to_owned(),
-            owner_signature: owner_signature.to_owned(),
             total_price,
         };
         execute(deps.as_mut(), mock_env(), sender1_info.to_owned(), msg).unwrap();
@@ -268,12 +244,8 @@ mod tests {
         let job_id = value.last_job_id;
 
         // Accept job
-        let worker_signature: String = "Sender2 signature".to_owned();
 
-        let msg = ExecuteMsg::AcceptJob {
-            job_id,
-            worker_signature: worker_signature.to_owned(),
-        };
+        let msg = ExecuteMsg::AcceptJob { job_id };
         execute(deps.as_mut(), mock_env(), sender2_info.to_owned(), msg).unwrap();
 
         // Check new job
@@ -282,9 +254,7 @@ mod tests {
         let job = value.job;
         assert_eq!(job.commitment, commitment.to_owned());
         assert_eq!(job.description, description.to_owned());
-        assert_eq!(job.owner_signature, owner_signature.to_owned());
         assert_eq!(job.owner, sender1_info.sender.to_owned());
         assert_eq!(job.worker, sender2_info.sender.to_owned());
-        assert_eq!(job.worker_signature, worker_signature.to_owned());
     }
 }

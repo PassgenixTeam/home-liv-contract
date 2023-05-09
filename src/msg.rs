@@ -12,13 +12,11 @@ pub enum ExecuteMsg {
         worker: Addr,
         commitment: String,
         description: String,
-        owner_signature: String,
         total_price: u128,
     },
 
     AcceptJob {
         job_id: u128,
-        worker_signature: String,
     },
 }
 
