@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GetDepositFeePercentResponse",
+  "type": "object",
+  "required": [
+    "deposit_fee_percent"
+  ],
+  "properties": {
+    "deposit_fee_percent": {
+      "type": "integer",
+      "format": "uint128",
+      "minimum": 0.0
+    }
+  },
+  "additionalProperties": false
+}

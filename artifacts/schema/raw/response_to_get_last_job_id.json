@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GetLastJobIdResponse",
+  "type": "object",
+  "required": [
+    "last_job_id"
+  ],
+  "properties": {
+    "last_job_id": {
+      "type": "integer",
+      "format": "uint128",
+      "minimum": 0.0
+    }
+  },
+  "additionalProperties": false
+}
